@@ -1,0 +1,32 @@
+dotenv: .env
+
+dependencies:
+  - OpenZeppelin/openzeppelin-contracts@5.0.2
+
+compiler:
+  solc:
+    remappings:
+      "@openzeppelin=OpenZeppelin/openzeppelin-contracts@5.0.2"
+
+networks:
+    sepolia:
+      wallets:
+        account-one: ${ACCOUNT_ONE}
+    goerli:
+      wallets:
+          account-one: ${ACCOUNT_ONE}
+    polygon-test:
+      wallets:
+        account-one: ${ACCOUNT_ONE}
+
+wallets:
+  sepolia:
+    weth: "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9"
+    leandingPoolAddressProvider: "0x012bAC54348C0E635dCAc9D5FB99f06F24136C9A"
+    
+  goerli: 
+    leandingPoolAddressProvider: "0x5E52dEc931FFb32f609681B8438A51c675cc232d"
+    weth: "0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6"
+  polygon-test:
+    weth: "0xA6FA4fB5f76172d178d61B04b0ecd319C5d1C0aa"
+    leandingPoolAddressProvider: "0x178113104fEcbcD7fF8669a0150721e231F0FD4B"
