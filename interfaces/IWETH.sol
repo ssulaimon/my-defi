@@ -7,4 +7,6 @@ interface IWETH{
     function balanceOf(address owner) external view returns(uint);
 
     function transfer(address dst, uint wad) external returns(bool);
+    
+    function approve(address guy, uint wad) external returns (bool);
 }

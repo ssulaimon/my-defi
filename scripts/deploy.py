@@ -1,17 +1,25 @@
 from brownie import DeFi, interface
-from scripts.modules import getWallet, amount, wETHContract, ledingPoolAddressProvider
+from scripts.modules import (
+    getWallet,
+    amount,
+    wETHContract,
+    ledingPoolAddressProvider,
+    aggregatorV3,
+)
 
 # 0xA65000645b9D4905260B63BCf5474a9D7EEB4834
 
 
 def deploy_defi():
     address = getWallet()
-    ether = amount(0.0001)
+    ether = amount(10)
     weth = wETHContract()
     pool = ledingPoolAddressProvider()
+    priceFeed = aggregatorV3()
     contract = DeFi.deploy(
         weth,
         pool,
+        priceFeed,
         {
             "from": address,
         },
@@ -41,4 +49,4 @@ def get_pool():
 
 
 def main():
-    get_pool()
+    deploy_defi()

@@ -21,3 +21,7 @@ def wETHContract():
 
 def ledingPoolAddressProvider():
     return config["wallets"][network.show_active()]["leandingPoolAddressProvider"]
+
+
+def aggregatorV3():
+    return config["wallets"][network.show_active()]["aggregatorV3Contract"]
