@@ -7,46 +7,27 @@ from scripts.modules import (
     aggregatorV3,
 )
 
-# 0xA65000645b9D4905260B63BCf5474a9D7EEB4834
 
-
-def deploy_defi():
+def approveToken():
     address = getWallet()
-    ether = amount(10)
-    weth = wETHContract()
-    pool = ledingPoolAddressProvider()
-    priceFeed = aggregatorV3()
-    contract = DeFi.deploy(
-        weth,
-        pool,
-        priceFeed,
-        {
-            "from": address,
-        },
+    value = amount(0.5)
+    wrapped = wETHContract()
+    contract = interface.IWETH(wrapped)
+    tx = contract.approve(
+        "0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951", value, {"from": address}
     )
+    tx.wait(1)
+    print(tx)
 
 
-def get_weth():
+def depositToken():
     address = getWallet()
-    ether = amount(0.001)
-    contract = DeFi[-1]
-    deposit = contract.convertToWETH({"from": address, "value": ether})
-    print(deposit)
-
-
-def get_amount():
-    address = getWallet()
-    contract = DeFi[-1]
-    balance = contract.wETHBalance({"from": address})
-    print(balance)
-
-
-def get_pool():
-    address = getWallet()
-    contract = DeFi[-1]
-    pool = contract.addressPool()
-    print(pool)
+    value = amount(0.001)
+    wrappedEth = wETHContract()
+    contract = interface.ILendingPool("0x6Ae43d3271ff6888e7Fc43Fd7321a503ff738951")
+    # address asset, uint256 amount, address onBehalfOf, uint16 referralCode
+    contract.supply(wrappedEth, value, address, 0, {"from": address})
 
 
 def main():
-    deploy_defi()
+    depositToken()

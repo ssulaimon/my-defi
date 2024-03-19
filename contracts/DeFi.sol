@@ -1,93 +1,78 @@
 //SPDX-License-Identifier:MIT
 pragma solidity >=0.8.0 <0.9.0;
-import "interfaces/IWETH.sol";
-import "interfaces/ILendingPoolAddressProvider.sol";
-import "interfaces/ILendingPool.sol";
+import "interfaces/IWrappedEther.sol";
+import "interfaces/IPoolAddressProvider.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "interfaces/AggregatorV3Interface.sol";
 
-contract DeFi {
-    IWETH iWETHContract;
-    ILendingPoolAddressProvider lendPoolAddressProvider;
-    ILendingPool lendingPool;
-    address WETH; 
-    AggregatorV3Interface aggregatorV3;
-    constructor(address _contractAddress, address _lendingPoolAdressProviderContract, address _aggregatorV3InterfaceContract)  {
+contract DeFi{
+    IWrappedEther wrappedEthereum;
+    IPoolAddressProvider poolAddressProvider;
+    AggregatorV3Interface aggregatorV3Interface;
+    uint256 setMinimumFee;
+    uint256 public fee;
+    address owner;
+    
+    constructor(address _wrappedEthereumContract, address _poolAddressProviderContract, address _aggregatorV3Contract, uint256 _minimumFee){
+        wrappedEthereum = IWrappedEther(_wrappedEthereumContract);
+        poolAddressProvider = IPoolAddressProvider(_poolAddressProviderContract);
+        aggregatorV3Interface = AggregatorV3Interface(_aggregatorV3Contract);
+        setMinimumFee = _minimumFee *(10**18);
+        owner = msg.sender;
 
-        //Connecting to Wrapped Ethereum contract
-        iWETHContract = IWETH(_contractAddress);
-
-        //Getting the lending Pool Address
-        lendPoolAddressProvider = ILendingPoolAddressProvider(_lendingPoolAdressProviderContract);
-
-        //Chainlink price feed contract connecting  
-        aggregatorV3 = AggregatorV3Interface(_aggregatorV3InterfaceContract);
-        
-        // Connecting to lending pool contract
-        lendingPool = ILendingPool(_getPoolAddress());
-
-        //setting the contract address of wrapped ethereum
-        WETH = _contractAddress;
-        
-    }
-    //all amount user have deposited to protocol 
-    mapping(address=> uint256) public addressToAmount;
-
-    // checking if user have already interacted with the contract previously
-    mapping(address=> bool) internal alreadyDeposited; 
-
-    //checking the amount of ether user have deposited through contract
-
-    function checkAmountDeposited()public view returns (uint256){
-        return addressToAmount[msg.sender];
     }
 
-    // converting ether to wrapped ethereum
-    function convertToWETH() public payable{
-        iWETHContract.deposit{value: msg.value}();
-        iWETHContract.transfer(msg.sender, msg.value);
-        if(alreadyDeposited[msg.sender]){
-            addressToAmount[msg.sender] += msg.value;
+    mapping (address=> uint256) amountTraded;
+    mapping(address=> bool) isUserNew;
+    function getWrappedEther()public payable{
+        wrappedEthereum.deposit{value: msg.value}();
+        wrappedEthereum.transfer(msg.sender, msg.value);
+        if(isUserNew[msg.sender]){
+            amountTraded[msg.sender] = msg.value;
         }else{
-            addressToAmount[msg.sender] = msg.value;
+            amountTraded[msg.sender] += msg.value;
         }
+
     }
 
-// check user wrapped ethereum balance 
-    function wETHBalance()public view returns(uint){
-         return iWETHContract.balanceOf(msg.sender);
-        
-    }
-// Get latest pool address 
-    function _getPoolAddress() internal view returns(address){
-        address pool = lendPoolAddressProvider.getPool();
-        return pool;
-    } 
-
-    function addressPool()public view returns(address){
-        return _getPoolAddress();
+     function checkAllowance()public view returns(uint256){
+       return wrappedEthereum.allowance(msg.sender, getPoolAddress());
     }
 
-    modifier tokenSpendApprove(uint256 amount){
-        require(amount <= wETHBalance(), "You cannot Approve token amount greater than your balance");
-        _;
+    function checkBalance()public view returns(uint256){
+        return wrappedEthereum.balanceOf(msg.sender);
     }
 
-    //deposit wrapped ethereum 
-    function depositToken()public payable tokenSpendApprove(msg.value){
-        address avaeePool = _getPoolAddress();
+    function getPoolAddress()public view returns(address){
+        return poolAddressProvider.getPool();
+    }
 
-        //approve spending of wrapped etherem token by avaee protocol 
-        iWETHContract.approve(avaeePool, msg.value);
-        //address asset, uint256 amount, address onBehalfOf, uint16 referralCode
-        lendingPool.supply(WETH, msg.value, msg.sender, 0);
-
+    function isAllowed(uint256 _amount)public view  returns(bool){
+        require(_amount <= checkBalance(), "Insufficient funds");
+        require(_amount <= checkAllowance(), "Insufficient Allowance");
+        return  true;
     }
 
     function latestEthereumPrice()public returns(uint256){
-        (,int256 answer,,,) = aggregatorV3.latestRoundData();
-        uint256 price = uint256(answer)*10**10;
-        return price;
+        (,int256 answer,,, ) = aggregatorV3Interface.latestRoundData();
+        uint256 etherPrice = uint256(answer)* 10**10;
+        return  etherPrice;
+    }
+
+    function minimunFee()public onlyOwner{
+        uint256 etherPrice = latestEthereumPrice();
+         fee = (setMinimumFee *10**18 ) / etherPrice;
        
-}
+    }
+
+    modifier onlyOwner{
+        require(msg.sender == owner, "Only Owner Can Call this function");
+        _;
+    }
+
+    function changeMinimumFee(uint256 _amount) public onlyOwner{
+        setMinimumFee = _amount * 10**18;
+        minimunFee();
+    }
+   
 }
