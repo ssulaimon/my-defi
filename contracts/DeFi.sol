@@ -25,6 +25,7 @@ contract DeFi{
     mapping (address=> uint256) amountTraded;
     mapping(address=> bool) isUserNew;
     function getWrappedEther()public payable{
+        require(msg.value >= fee, "Amount is not up to minimum fee");
         wrappedEthereum.deposit{value: msg.value}();
         wrappedEthereum.transfer(msg.sender, msg.value);
         if(isUserNew[msg.sender]){
