@@ -1,4 +1,4 @@
-from brownie import network, accounts, config, interface, DeFi
+from brownie import network, accounts, config, interface, DeFi, interface
 from web3 import Web3
 
 
@@ -54,4 +54,12 @@ def getUserData(userAddress: str):
         ltv,
         healthFactor,
     ) = pool.getUserAccountData(userAddress)
-    print(Web3.from_wei(totalCollateralBase, "wei"))
+    depositedEthAmount = Web3.from_wei(totalCollateralBase, "ether")
+    loanAbleValue = Web3.from_wei(availableBorrowsBase, "ether")
+    print(depositedEthAmount)
+    print(loanAbleValue)
+
+
+def poolAddressGetter():
+    contract = interface.IPoolAddressProvider(poolAddressProvider())
+    return contract.getPool()

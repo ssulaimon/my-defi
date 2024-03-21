@@ -8,6 +8,7 @@ from scripts.modules import (
     amount,
     tokenApprove,
     getUserData,
+    poolAddressGetter,
 )
 from brownie.exceptions import VirtualMachineError
 
@@ -94,5 +95,21 @@ def setMinimumFee():
         print(error)
 
 
+def withdrawFunds(amountToWithdraw: int):
+    wrappedEther = wETHContract()
+    address = getWallet()
+    value = amount(amountToWithdraw)
+    pool = interface.ILendingPool(poolAddressGetter())
+    withdraw = pool.withdraw(
+        wrappedEther,
+        value,
+        address,
+        {
+            "from": address,
+        },
+    )
+    print(f"You have successfully withdrawn {value} ether")
+
+
 def main():
-    getUserData(getWallet())
+    withdrawFunds(0.001)
